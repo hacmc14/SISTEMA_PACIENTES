@@ -1,7 +1,7 @@
 <?php
-require_once "auth.php"; exigir_login();
+require_once __DIR__ . "/auth.php"; exigir_login();
 
-require_once "conexion.php";
+require_once __DIR__ . "/conexion.php";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $paciente_id = filter_input(INPUT_POST, "paciente_id", FILTER_VALIDATE_INT);
@@ -24,16 +24,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if ($accion === "solicitar") {
         $stmt = $conexion->prepare(
-            "INSERT IGNORE INTO dietas_pacientes (paciente_id, dieta, suministrada)
-             VALUES (?, 'Requiere dieta', 0)"
+            "INSERT INTO dietas_pacientes (paciente_id, dieta, suministrada)
+             VALUES (?, 'Requiere dieta', FALSE)
+             ON CONFLICT (paciente_id) DO NOTHING"
         );
         $stmt->bind_param("i", $paciente_id);
         $stmt->execute();
         header("Location: lista_dieta.php?guardado=1");
     } else {
         $stmt = $conexion->prepare(
-            "UPDATE dietas_pacientes SET suministrada = 1
-             WHERE paciente_id = ? AND suministrada = 0"
+            "UPDATE dietas_pacientes
+             SET suministrada = TRUE, fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE paciente_id = ? AND suministrada = FALSE"
         );
         $stmt->bind_param("i", $paciente_id);
         $stmt->execute();

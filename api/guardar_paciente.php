@@ -1,7 +1,7 @@
 <?php
-require_once "auth.php"; exigir_login();
+require_once __DIR__ . "/auth.php"; exigir_login();
 
-require_once "conexion.php";
+require_once __DIR__ . "/conexion.php";
 $nombre = trim($_POST["nombre"] ?? "");
 
 // Solo permite nombres con letras, espacios, apóstrofes y guiones.

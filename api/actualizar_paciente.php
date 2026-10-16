@@ -1,7 +1,7 @@
 <?php
-require_once "auth.php"; exigir_login();
+require_once __DIR__ . "/auth.php"; exigir_login();
 
-require_once "conexion.php";
+require_once __DIR__ . "/conexion.php";
 $id = (int)(
     $_POST["id"] ?? 0
 );
