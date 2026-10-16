@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/conexion.php'; require_once __DIR__ . '/auth.php'; exigir_master();
+require_once dirname(__DIR__) . '/lib/php/conexion.php'; require_once dirname(__DIR__) . '/lib/php/auth.php'; exigir_master();
 $mensaje=''; $error='';
 if ($_SERVER['REQUEST_METHOD']==='POST') {
  validar_csrf(); $accion=$_POST['accion']??'';

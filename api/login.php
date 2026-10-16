@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/conexion.php';
-require_once __DIR__ . '/auth.php';
+require_once dirname(__DIR__) . '/lib/php/conexion.php';
+require_once dirname(__DIR__) . '/lib/php/auth.php';
 if (usuario_autenticado()) { header('Location: ' . ($_SESSION['usuario_rol'] === 'master' ? 'usuarios.php' : 'admin.php')); exit; }
 $total = (int)($conexion->query("SELECT COUNT(*) AS total FROM usuarios_sistema")->fetch_assoc()['total'] ?? 0);
 $error = '';

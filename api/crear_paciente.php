@@ -1,4 +1,4 @@
-<?php require_once __DIR__ . "/auth.php"; exigir_login(); ?>
+<?php require_once dirname(__DIR__) . "/lib/php/auth.php"; exigir_login(); ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

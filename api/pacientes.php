@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/conexion.php";
+require_once dirname(__DIR__) . "/lib/php/conexion.php";
 
 $resultado = $conexion->query("SELECT * FROM pacientes ORDER BY id DESC");
 

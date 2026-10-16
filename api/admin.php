@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . "/auth.php"; exigir_login();
+require_once dirname(__DIR__) . "/lib/php/auth.php"; exigir_login();
 
-require_once __DIR__ . "/conexion.php";
+require_once dirname(__DIR__) . "/lib/php/conexion.php";
 
 $buscar = trim($_GET["buscar"] ?? "");
 $ubicacion = $_GET["ubicacion"] ?? "";
