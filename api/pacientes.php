@@ -1,5 +1,5 @@
 <?php
-require_once "conexion.php";
+require_once dirname(__DIR__) . "/lib/php/conexion.php";
 
 $resultado = $conexion->query("SELECT * FROM pacientes ORDER BY id DESC");
 
@@ -25,7 +25,7 @@ if (isset($_GET["actualizacion"])) {
         "SELECT p.id, p.nombre, d.dieta, d.fecha_actualizacion
          FROM pacientes p
          INNER JOIN dietas_pacientes d ON d.paciente_id = p.id
-         WHERE p.ubicacion = 'Sala de recuperación' AND d.suministrada = 0
+         WHERE p.ubicacion = 'Sala de recuperación' AND d.suministrada = FALSE
          ORDER BY p.id DESC"
     );
     while ($fila_dieta = $consulta_dietas->fetch_assoc()) {
@@ -54,7 +54,7 @@ $resultado_dietas = $conexion->query(
     "SELECT p.id, p.nombre, d.dieta, d.fecha_actualizacion
      FROM pacientes p
      INNER JOIN dietas_pacientes d ON d.paciente_id = p.id
-     WHERE p.ubicacion = 'Sala de recuperación' AND d.suministrada = 0
+     WHERE p.ubicacion = 'Sala de recuperación' AND d.suministrada = FALSE
      ORDER BY p.id DESC"
 );
 while ($paciente_dieta = $resultado_dietas->fetch_assoc()) {
@@ -363,7 +363,7 @@ if (sonidoActivado) {
 
 setInterval(async () => {
     try {
-        const respuesta = await fetch("Pacientes.php?actualizacion=1&_=" + Date.now(), { cache: "no-store" });
+        const respuesta = await fetch("pacientes.php?actualizacion=1&_=" + Date.now(), { cache: "no-store" });
         const datos = await respuesta.json();
         detectarCambios(datos.pacientes, datos.dietas_pendientes);
     } catch (e) {}

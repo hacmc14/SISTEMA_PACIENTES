@@ -1,7 +1,7 @@
 <?php
-require_once "auth.php"; exigir_login();
+require_once dirname(__DIR__) . "/lib/php/auth.php"; exigir_login();
 
-require_once "conexion.php";
+require_once dirname(__DIR__) . "/lib/php/conexion.php";
 
 $buscar = trim($_GET["buscar"] ?? "");
 $ubicacion = $_GET["ubicacion"] ?? "";
@@ -11,7 +11,7 @@ $parametros = [];
 $tipos = "";
 
 if ($buscar !== "") {
-    $sql .= " AND nombre LIKE ?";
+    $sql .= " AND nombre ILIKE ?";
     $parametros[] = "%" . $buscar . "%";
     $tipos .= "s";
 }

@@ -1,0 +1,35 @@
+{
+  "functions": {
+    "api/*.php": {
+      "runtime": "vercel-php@0.7.4"
+    }
+  },
+  "rewrites": [
+    { "source": "/", "destination": "/api/index.php" },
+    { "source": "/index.php", "destination": "/api/index.php" },
+    { "source": "/login.php", "destination": "/api/login.php" },
+    { "source": "/admin.php", "destination": "/api/admin.php" },
+    { "source": "/usuarios.php", "destination": "/api/usuarios.php" },
+    { "source": "/crear_paciente.php", "destination": "/api/crear_paciente.php" },
+    { "source": "/guardar_paciente.php", "destination": "/api/guardar_paciente.php" },
+    { "source": "/editar_paciente.php", "destination": "/api/editar_paciente.php" },
+    { "source": "/actualizar_paciente.php", "destination": "/api/actualizar_paciente.php" },
+    { "source": "/eliminar_paciente.php", "destination": "/api/eliminar_paciente.php" },
+    { "source": "/lista_dieta.php", "destination": "/api/lista_dieta.php" },
+    { "source": "/pacientes.php", "destination": "/api/pacientes.php" },
+    { "source": "/Pacientes.php", "destination": "/pacientes.php" },
+    { "source": "/logout.php", "destination": "/api/logout.php" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    }
+  ]
+}
