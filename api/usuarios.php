@@ -20,9 +20,16 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
    if(!$error) { $hash=password_hash($clave,PASSWORD_DEFAULT); $st=$conexion->prepare('UPDATE usuarios_sistema SET clave_hash=? WHERE id=?'); $st->bind_param('si',$hash,$id); if($st->execute() && $st->affected_rows===1) $mensaje='Contraseña actualizada.'; else $error='No se pudo actualizar la contraseña.'; }
   }
  } elseif ($accion==='eliminar') {
-  $id=(int)($_POST['id']??0);
-  if($id<1 || $id===(int)$_SESSION['usuario_id']) $error='No puedes eliminar tu propia cuenta.';
-  else { $st=$conexion->prepare('DELETE FROM usuarios_sistema WHERE id=? AND rol <> \'master\''); $st->bind_param('i',$id); $st->execute(); if($st->affected_rows) $mensaje='Usuario eliminado.'; else $error='No se eliminó. Las cuentas Master no se pueden borrar desde esta pantalla.'; }
+  $idInput=$_POST['id']??null;
+  $id=is_string($idInput)?filter_var($idInput,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]):false;
+  if($id===false) $error='El identificador del usuario no es válido.';
+  elseif($id===(int)$_SESSION['usuario_id']) $error='No puedes eliminar tu propia cuenta.';
+  else {
+   $check=$conexion->prepare('SELECT rol FROM usuarios_sistema WHERE id=?'); $check->bind_param('i',$id); $check->execute(); $cuenta=$check->get_result()->fetch_assoc();
+   if(!$cuenta) $error='El usuario ya no existe o no se pudo encontrar.';
+   elseif($cuenta['rol']==='master') $error='La cuenta Master está protegida y no se puede eliminar.';
+   else { $st=$conexion->prepare('DELETE FROM usuarios_sistema WHERE id=? AND rol <> \'master\''); $st->bind_param('i',$id); if($st->execute() && $st->affected_rows===1) $mensaje='Usuario eliminado correctamente.'; else $error='No se pudo eliminar el usuario. La cuenta puede estar protegida o ya no existir.'; }
+  }
  }
 }
 $usuarios=$conexion->query('SELECT id,nombre,usuario,rol,creado_en FROM usuarios_sistema ORDER BY id ASC'); $csrf=token_csrf();
@@ -32,8 +39,9 @@ $usuarios=$conexion->query('SELECT id,nombre,usuario,rol,creado_en FROM usuarios
 </style></head><body><div class="um-wrap"><div class="um-top"><div class="um-brand"><img src="img/logo.png" alt="Logo del sistema"><div><h1>Administración Master</h1><p>Sesión de <?= htmlspecialchars($_SESSION['usuario_nombre'],ENT_QUOTES,'UTF-8') ?> · control de cuentas</p></div></div><div><a class="boton azul" href="admin.php">Volver al sistema</a></div></div>
 <?php if($mensaje): ?><p class="um-ok"><?= htmlspecialchars($mensaje) ?></p><?php endif; ?><?php if($error): ?><p class="um-error"><?= htmlspecialchars($error) ?></p><?php endif; ?>
 <section class="um-card"><h2>Crear usuario</h2><p class="um-note">Las contraseñas se guardan cifradas mediante hash; nunca se muestran en pantalla.</p><form method="POST"><input type="hidden" name="csrf_token" value="<?= $csrf ?>"><input type="hidden" name="accion" value="crear"><div class="um-grid"><div><label>Nombre</label><input name="nombre" required maxlength="100"></div><div><label>Usuario (3–40 caracteres)</label><input name="usuario" required minlength="3" maxlength="40" pattern="[A-Za-z0-9_.-]+"></div><div><label>Contraseña (mínimo 10)</label><input type="password" name="clave" required minlength="10" autocomplete="new-password"></div></div><p><button class="um-btn" type="submit">Crear usuario</button></p></form></section>
-<section class="um-card"><h2>Usuarios registrados</h2><div style="overflow-x:auto"><table class="um-table um-users-table"><thead><tr><th>Nombre / usuario</th><th>Rol</th><th>Contraseña</th><th>Eliminar</th></tr></thead><tbody><?php while($u=$usuarios->fetch_assoc()): ?><tr><td><strong><?= htmlspecialchars($u['nombre'],ENT_QUOTES,'UTF-8') ?></strong><br><?= htmlspecialchars($u['usuario'],ENT_QUOTES,'UTF-8') ?><br><span class="um-note">Creado: <?= htmlspecialchars($u['creado_en']) ?></span></td><td><?= $u['rol']==='master'?'Master':'Usuario' ?></td><td><button class="um-btn js-open-password-modal" type="button" data-user-id="<?= (int)$u['id'] ?>" data-user-name="<?= htmlspecialchars($u['nombre'],ENT_QUOTES,'UTF-8') ?>">Actualizar contraseña</button></td><td><?php if($u['rol']!=='master' && (int)$u['id']!==(int)$_SESSION['usuario_id']): ?><form method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este usuario?')"><input type="hidden" name="csrf_token" value="<?= $csrf ?>"><input type="hidden" name="accion" value="eliminar"><input type="hidden" name="id" value="<?= (int)$u['id'] ?>"><button class="um-btn red" type="submit">Eliminar</button></form><?php else: ?><span class="um-note">Protegido</span><?php endif; ?></td></tr><?php endwhile; ?></tbody></table></div></section>
+<section class="um-card"><h2>Usuarios registrados</h2><div style="overflow-x:auto"><table class="um-table um-users-table"><thead><tr><th>Nombre / usuario</th><th>Rol</th><th>Contraseña</th><th>Eliminar</th></tr></thead><tbody><?php while($u=$usuarios->fetch_assoc()): ?><tr><td><strong><?= htmlspecialchars($u['nombre'],ENT_QUOTES,'UTF-8') ?></strong><br><?= htmlspecialchars($u['usuario'],ENT_QUOTES,'UTF-8') ?><br><span class="um-note">Creado: <?= htmlspecialchars($u['creado_en']) ?></span></td><td><?= $u['rol']==='master'?'Master':'Usuario' ?></td><td><button class="um-btn js-open-password-modal" type="button" data-user-id="<?= (int)$u['id'] ?>" data-user-name="<?= htmlspecialchars($u['nombre'],ENT_QUOTES,'UTF-8') ?>">Actualizar contraseña</button></td><td><?php if($u['rol']!=='master' && (int)$u['id']!==(int)$_SESSION['usuario_id']): ?><form method="POST"><input type="hidden" name="csrf_token" value="<?= $csrf ?>"><input type="hidden" name="accion" value="eliminar"><input type="hidden" name="id" value="<?= (int)$u['id'] ?>"><button class="um-btn red js-open-delete-modal" type="button" data-user-name="<?= htmlspecialchars($u['nombre'],ENT_QUOTES,'UTF-8') ?>">Eliminar</button></form><?php elseif($u['rol']==='master'): ?><span class="um-note">Cuenta Master protegida</span><?php else: ?><span class="um-note">Tu cuenta</span><?php endif; ?></td></tr><?php endwhile; ?></tbody></table></div></section>
 <footer class="um-footer"><a class="boton gris" href="logout.php">Cerrar sesión</a></footer></div>
+<div class="um-modal" id="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" aria-describedby="delete-modal-description" hidden><section class="um-modal-card"><h2 id="delete-modal-title">Confirmar eliminación</h2><p id="delete-modal-description">¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer</p><p>Usuario: <strong id="delete-modal-user"></strong></p><div class="um-modal-actions"><button class="um-btn gray" type="button" id="cancel-delete-modal">Cancelar</button><button class="um-btn red" type="button" id="confirm-delete-user">Eliminar</button></div></section></div>
 <div class="um-modal" id="password-modal" role="dialog" aria-modal="true" aria-labelledby="password-modal-title" aria-describedby="password-modal-description" hidden>
 <section class="um-modal-card"><button class="um-modal-close" type="button" id="close-password-modal" aria-label="Cerrar">×</button><h2 id="password-modal-title">Actualizar contraseña</h2><p id="password-modal-description" class="um-note">Ingresa la nueva contraseña para <strong id="password-modal-user"></strong>.</p><form method="POST" id="password-form"><input type="hidden" name="csrf_token" value="<?= $csrf ?>"><input type="hidden" name="accion" value="cambiar_clave"><input type="hidden" name="id" id="password-user-id">
 <div id="current-password-field" hidden><label for="password-current">Contraseña actual</label><input id="password-current" type="password" name="clave_actual" autocomplete="current-password"></div>
@@ -81,5 +89,36 @@ passwordForm.addEventListener('submit', (event) => {
             document.getElementById('password-confirm').setCustomValidity('');
         }, { once: true });
     }
+});
+</script><script>
+const deleteModal = document.getElementById('delete-modal');
+const deleteModalUser = document.getElementById('delete-modal-user');
+const cancelDeleteButton = document.getElementById('cancel-delete-modal');
+let pendingDeleteForm = null;
+let deleteModalTrigger = null;
+const closeDeleteModal = () => {
+    deleteModal.hidden = true;
+    pendingDeleteForm = null;
+    if (deleteModalTrigger) deleteModalTrigger.focus();
+};
+document.querySelectorAll('.js-open-delete-modal').forEach((button) => {
+    button.addEventListener('click', () => {
+        pendingDeleteForm = button.closest('form');
+        deleteModalTrigger = button;
+        deleteModalUser.textContent = button.dataset.userName || '';
+        deleteModal.hidden = false;
+        cancelDeleteButton.focus();
+    });
+});
+cancelDeleteButton.addEventListener('click', closeDeleteModal);
+deleteModal.addEventListener('click', (event) => {
+    if (event.target === deleteModal) closeDeleteModal();
+});
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !deleteModal.hidden) closeDeleteModal();
+});
+document.getElementById('confirm-delete-user').addEventListener('click', () => {
+    if (!pendingDeleteForm) return;
+    pendingDeleteForm.requestSubmit();
 });
 </script></body></html>
